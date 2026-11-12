@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Property Cost Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#EEF1F5;--surface:#fff;--ink:#162029;--muted:#5B6874;--line:#DDE3EA;--field:#F6F8FA;--lockbg:#F0F3F6;
+  --accent:#B4236E;--tint:#FBE8F1;--on:#fff;--shadow:0 1px 2px rgba(22,32,41,.06),0 8px 24px rgba(22,32,41,.06);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-tab="m"]{--accent:#1F5FD1;--tint:#E6EEFB}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#0E1318;--surface:#161D24;--ink:#E8EDF2;--muted:#93A0AD;--line:#27313B;--field:#1C252E;--lockbg:#1A222A;--accent:#F26BB0;--tint:#3A1829;--on:#0E1318;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3)}
+  :root:not([data-theme="light"])[data-tab="m"]{--accent:#6EA2FF;--tint:#14264A}
+}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0E1318;--surface:#161D24;--ink:#E8EDF2;--muted:#93A0AD;--line:#27313B;--field:#1C252E;--lockbg:#1A222A;--accent:#F26BB0;--tint:#3A1829;--on:#0E1318;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3)}
+:root[data-theme="dark"][data-tab="m"]{--accent:#6EA2FF;--tint:#14264A}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.45 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 18px 48px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{margin:0;font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+header p{margin:6px 0 0;color:var(--muted)}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tabs{display:inline-flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.tab{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--muted);font:600 15px inherit;font-family:inherit;padding:10px 20px;border-radius:12px;cursor:pointer;transition:background .25s,color .25s}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on)}
+.tab:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}
+.side{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:0 0 10px;color:var(--muted);font-size:13px}
+.link{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font:600 13px inherit;font-family:inherit;cursor:pointer;padding:6px 8px;border-radius:8px}
+.link:hover{color:var(--accent);background:var(--tint)}
+.link svg.i{width:15px;height:15px}
+.row{display:grid;grid-template-columns:38px 1fr minmax(150px,210px);align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.ic{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--tint);color:var(--accent)}
+.lk .ic{background:var(--lockbg);color:var(--muted)}
+.lab{display:flex;flex-direction:column;min-width:0}
+.lab b{font-weight:600}
+.lab small{color:var(--muted);font-size:12.5px}
+.field{position:relative;display:flex;align-items:center;background:var(--field);border:1.5px solid var(--line);border-radius:12px;transition:border-color .2s,box-shadow .2s,background .2s}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--tint);background:var(--surface)}
+.field input{width:100%;min-width:0;border:0;background:transparent;color:var(--ink);font:600 15px inherit;font-family:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:10px 12px;outline:0}
+.pre,.suf{color:var(--muted);font-weight:600;padding-left:12px}
+.suf{padding:0 12px 0 0;font-size:12.5px;white-space:nowrap}
+.field.auto.edited{border-color:var(--accent)}
+.rs{display:none;align-items:center;justify-content:center;width:30px;height:30px;margin-right:4px;border:0;border-radius:8px;background:var(--tint);color:var(--accent);cursor:pointer;flex:none}
+.edited .rs{display:inline-flex}
+.tag{position:absolute;top:-8px;left:10px;font-size:10.5px;font-weight:700;background:var(--surface);color:var(--muted);padding:0 6px;border-radius:6px;line-height:16px}
+.edited .tag{color:var(--accent)}
+.lk .field{background:var(--lockbg);border-style:dashed}
+.lk .field input{cursor:default}
+.lk .lockic{display:grid;place-items:center;padding-left:10px;color:var(--muted)}
+.lk .lockic svg.i{width:15px;height:15px}
+.row.total{border-top:2px solid var(--line)}
+.hero{margin-top:10px;border-radius:18px;background:var(--accent);color:var(--on);padding:18px;display:flex;flex-direction:column;gap:4px;border:0}
+.hero .l{display:flex;align-items:center;gap:8px;font-weight:600;opacity:.92}
+.hero .l small{opacity:.8;font-weight:500}
+.hero output{font-size:clamp(28px,6vw,38px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;word-break:break-all}
+.hero .words{font-size:13px;opacity:.85}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.side{position:static}}
+@media (max-width:520px){
+  .wrap{padding:20px 14px 40px}.card{padding:16px;border-radius:18px}
+  .row{grid-template-columns:38px 1fr;row-gap:8px}.row .field{grid-column:1 / -1}
+  .tabs{width:100%}.tab{flex:1;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+<symbol id="i-rupee" viewBox="0 0 24 24"><path d="M6 3h12"/><path d="M6 8h12"/><path d="m6 13 8.5 8"/><path d="M6 13h3"/><path d="M9 13c6.667 0 6.667-10 0-10"/></symbol>
+<symbol id="i-calc" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+<symbol id="i-sofa" viewBox="0 0 24 24"><path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2"/><path d="M19 18v2"/></symbol>
+<symbol id="i-badge" viewBox="0 0 24 24"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-landmark" viewBox="0 0 24 24"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></symbol>
+<symbol id="i-percent" viewBox="0 0 24 24"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+<symbol id="i-clip" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+<symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 7V5a1 1 0 0 0-1-1H6.5a.5.5 0 0 0-.4.8l4.5 6a2 2 0 0 1 0 2.4l-4.5 6a.5.5 0 0 0 .4.8H17a1 1 0 0 0 1-1v-2"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-venus" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M12 15v7"/><path d="M9 19h6"/></symbol>
+<symbol id="i-mars" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="m21 3-6.75 6.75"/><circle cx="10" cy="14" r="6"/></symbol>
+</defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Property cost calculator</h1>
+      <p>Agreement value, stamp duty, GST and the final amount payable.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Buyer">
+      <button class="tab" role="tab" id="tab-f" aria-selected="true" data-t="f"><svg class="i"><use href="#i-venus"/></svg>Female</button>
+      <button class="tab" role="tab" id="tab-m" aria-selected="false" data-t="m"><svg class="i"><use href="#i-mars"/></svg>Male</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card" aria-labelledby="h-in">
+      <div class="ch">
+        <h2 id="h-in">Property details</h2>
+        <button class="link" id="reset-all" type="button"><svg class="i"><use href="#i-undo"/></svg>Reset all</button>
+      </div>
+      <p class="sub">Every field is editable. Fields marked Auto use a formula until you type your own value.</p>
+      <div id="inputs"></div>
+    </section>
+
+    <aside class="card side" aria-labelledby="h-out">
+      <div class="ch"><h2 id="h-out">Cost breakdown</h2></div>
+      <p class="sub">Calculated for you. These fields are locked.</p>
+      <div id="outputs"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(function(){
+  var DEF = {
+    f:{carpet:878,psft:7300,infra:650000,furn:1500000,sd:.06},
+    m:{carpet:878,psft:8000,infra:650000,furn:0,sd:.07}
+  };
+  var S = {};
+  function fresh(t){var d=DEF[t];return{carpet:d.carpet,psft:d.psft,infra:d.infra,furn:d.furn,ov:{}}}
+  S.f = fresh('f'); S.m = fresh('m');
+  var cur = 'f';
+
+  // [key, label, hint, icon, isFormula, isArea]
+  var ED = [
+    ['carpet','Carpet','Area in sq ft','ruler',0,1],
+    ['built','Built Up','Carpet × 1.35','building',1,1],
+    ['psft','PSFT','Rate per sq ft','rupee',0,0],
+    ['basic','Basic Value','Built Up × PSFT','calc',1,0],
+    ['infra','Infra','Infrastructure charges','zap',0,0],
+    ['agr','Agreement Value','Basic Value + Infra','file',1,0],
+    ['furn','Furniture','Deducted from agreement value','sofa',0,0]
+  ];
+  var LK = [
+    ['fav','Final Agreement Value','Agreement Value − Furniture','badge'],
+    ['sd','','','landmark'],
+    ['gst','GST','5% of final agreement value','percent'],
+    ['reg','Registration','Fixed charge','clip'],
+    ['legal','Legal','Fixed charge','scale'],
+    ['total','Total','Final Agreement Value + SD + GST + Registration + Legal','sigma']
+  ];
+
+  function ico(n){return '<svg class="i" aria-hidden="true"><use href="#i-'+n+'"/></svg>'}
+  var fmt = function(n){return (isFinite(n)?n:0).toLocaleString('en-IN',{maximumFractionDigits:2})};
+  var parse = function(v){var n=parseFloat(String(v).replace(/,/g,''));return isFinite(n)?n:0};
+
+  function calc(s,rate){
+    var o=s.ov,n={};
+    n.built = o.built!=null ? o.built : s.carpet*1.35;
+    n.basic = o.basic!=null ? o.basic : n.built*s.psft;
+    n.agr   = o.agr!=null   ? o.agr   : n.basic+s.infra;
+    n.fav   = n.agr - s.furn;
+    n.sd    = n.fav*rate;
+    n.gst   = n.fav*0.05;
+    n.reg   = 30000;
+    n.legal = 20000;
+    n.total = n.fav+n.sd+n.gst+n.reg+n.legal;
+    n.final = n.total+s.furn;
+    return n;
+  }
+
+  function build(){
+    var h='';
+    ED.forEach(function(r){
+      var k=r[0], pre=r[5]?'':'<span class="pre">₹</span>', suf=r[5]?'<span class="suf">sq ft</span>':'';
+      h+='<div class="row" data-k="'+k+'"><span class="ic">'+ico(r[3])+'</span>'+
+         '<div class="lab"><b>'+r[1]+'</b><small>'+r[2]+'</small></div>'+
+         '<div class="field'+(r[4]?' auto':'')+'">'+(r[4]?'<span class="tag">Auto</span>':'')+pre+
+         '<input id="f-'+k+'" data-k="'+k+'" type="text" inputmode="decimal" autocomplete="off" aria-label="'+r[1]+'">'+suf+
+         (r[4]?'<button class="rs" type="button" data-reset="'+k+'" title="Back to formula" aria-label="Reset '+r[1]+' to formula">'+ico('undo')+'</button>':'')+
+         '</div></div>';
+    });
+    document.getElementById('inputs').innerHTML=h;
+
+    h='';
+    LK.forEach(function(r){
+      var k=r[0];
+      h+='<div class="row lk'+(k==='total'?' total':'')+'" data-k="'+k+'"><span class="ic">'+ico(r[3])+'</span>'+
+         '<div class="lab"><b id="lb-'+k+'">'+r[1]+'</b><small id="sb-'+k+'">'+r[2]+'</small></div>'+
+         '<div class="field"><span class="lockic">'+ico('lock')+'</span><span class="pre">₹</span>'+
+         '<input id="o-'+k+'" readonly tabindex="-1" aria-readonly="true" aria-labelledby="lb-'+k+'"></div></div>';
+    });
+    h+='<div class="hero" role="group" aria-label="Final amount"><div class="l">'+ico('wallet')+'Final <small>Total + Furniture</small></div>'+
+       '<output id="o-final">₹0</output></div>';
+    document.getElementById('outputs').innerHTML=h;
+  }
+
+  function render(){
+    var s=S[cur], rate=DEF[cur].sd, n=calc(s,rate), act=document.activeElement;
+    ED.forEach(function(r){
+      var k=r[0], el=document.getElementById('f-'+k);
+      var val = r[4] ? n[k] : s[k];
+      if(el!==act) el.value = fmt(val);
+      if(r[4]){
+        var f=el.parentNode, ed = s.ov[k]!=null;
+        f.classList.toggle('edited',ed);
+        f.querySelector('.tag').textContent = ed?'Edited':'Auto';
+      }
+    });
+    var pct = Math.round(rate*100);
+    document.getElementById('lb-sd').textContent='SD @'+pct+'%';
+    document.getElementById('sb-sd').textContent='Stamp duty, '+pct+'% of final agreement value';
+    ['fav','sd','gst','reg','legal','total'].forEach(function(k){
+      document.getElementById('o-'+k).value=fmt(n[k]);
+    });
+    document.getElementById('o-final').textContent='₹'+fmt(n.final);
+  }
+
+  function setTab(t){
+    cur=t;
+    document.documentElement.setAttribute('data-tab',t);
+    document.querySelectorAll('.tab').forEach(function(b){b.setAttribute('aria-selected',b.dataset.t===t)});
+    render();
+  }
+
+  build();
+  document.documentElement.setAttribute('data-tab','f');
+
+  document.querySelector('.tabs').addEventListener('click',function(e){
+    var b=e.target.closest('.tab'); if(b) setTab(b.dataset.t);
+  });
+
+  var box=document.getElementById('inputs');
+  box.addEventListener('input',function(e){
+    var el=e.target; if(!el.dataset.k) return;
+    var clean=el.value.replace(/[^\d.,]/g,'');
+    if(clean!==el.value) el.value=clean;
+    var k=el.dataset.k, s=S[cur], isF=ED.filter(function(r){return r[0]===k})[0][4];
+    if(isF){
+      if(clean.trim()==='') delete s.ov[k]; else s.ov[k]=parse(clean);
+    } else s[k]=parse(clean);
+    render();
+  });
+  box.addEventListener('focusin',function(e){if(e.target.tagName==='INPUT') setTimeout(function(){e.target.select()},0)});
+  box.addEventListener('focusout',function(){setTimeout(render,0)});
+  box.addEventListener('click',function(e){
+    var b=e.target.closest('[data-reset]'); if(!b) return;
+    delete S[cur].ov[b.dataset.reset]; render();
+  });
+
+  document.getElementById('reset-all').addEventListener('click',function(){S[cur]=fresh(cur);render()});
+
+  render();
+})();
+</script>
+</body>
+</html>
