@@ -139,26 +139,27 @@ h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
     m:{carpet:878,psft:8000,infra:650000,furn:0,sd:.07}
   };
   var S = {};
-  function fresh(t){var d=DEF[t];return{carpet:d.carpet,psft:d.psft,infra:d.infra,furn:d.furn,ov:{}}}
+  function fresh(t){var d=DEF[t];return{carpet:d.carpet,factor:1.35,psft:d.psft,infra:d.infra,furn:d.furn,legal:20000,ov:{}}}
   S.f = fresh('f'); S.m = fresh('m');
   var cur = 'f';
 
   // [key, label, hint, icon, isFormula, isArea]
   var ED = [
     ['carpet','Carpet','Area in sq ft','ruler',0,1],
-    ['built','Built Up','Carpet × 1.35','building',1,1],
+    ['factor','Built Up Multiplier','Carpet × multiplier = Built Up','percent',0,2],
+    ['built','Built Up','Carpet × Multiplier','building',1,1],
     ['psft','PSFT','Rate per sq ft','rupee',0,0],
     ['basic','Basic Value','Built Up × PSFT','calc',1,0],
     ['infra','Infra','Infrastructure charges','zap',0,0],
     ['agr','Agreement Value','Basic Value + Infra','file',1,0],
-    ['furn','Furniture','Deducted from agreement value','sofa',0,0]
+    ['furn','Furniture','Deducted from agreement value','sofa',0,0],
+    ['legal','Legal','Legal charges','scale',0,0]
   ];
   var LK = [
     ['fav','Final Agreement Value','Agreement Value − Furniture','badge'],
     ['sd','','','landmark'],
     ['gst','GST','5% of final agreement value','percent'],
     ['reg','Registration','Fixed charge','clip'],
-    ['legal','Legal','Fixed charge','scale'],
     ['total','Total','Final Agreement Value + SD + GST + Registration + Legal','sigma']
   ];
 
@@ -168,14 +169,14 @@ h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
 
   function calc(s,rate){
     var o=s.ov,n={};
-    n.built = o.built!=null ? o.built : s.carpet*1.35;
+    n.built = o.built!=null ? o.built : s.carpet*s.factor;
     n.basic = o.basic!=null ? o.basic : n.built*s.psft;
     n.agr   = o.agr!=null   ? o.agr   : n.basic+s.infra;
     n.fav   = n.agr - s.furn;
     n.sd    = n.fav*rate;
     n.gst   = n.fav*0.05;
     n.reg   = 30000;
-    n.legal = 20000;
+    n.legal = s.legal;
     n.total = n.fav+n.sd+n.gst+n.reg+n.legal;
     n.final = n.total+s.furn;
     return n;
@@ -184,7 +185,7 @@ h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
   function build(){
     var h='';
     ED.forEach(function(r){
-      var k=r[0], pre=r[5]?'':'<span class="pre">₹</span>', suf=r[5]?'<span class="suf">sq ft</span>':'';
+      var k=r[0], pre=r[5]?'':'<span class="pre">₹</span>', suf=r[5]===1?'<span class="suf">sq ft</span>':(r[5]===2?'<span class="suf">×</span>':'');
       h+='<div class="row" data-k="'+k+'"><span class="ic">'+ico(r[3])+'</span>'+
          '<div class="lab"><b>'+r[1]+'</b><small>'+r[2]+'</small></div>'+
          '<div class="field'+(r[4]?' auto':'')+'">'+(r[4]?'<span class="tag">Auto</span>':'')+pre+
@@ -222,7 +223,7 @@ h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
     var pct = Math.round(rate*100);
     document.getElementById('lb-sd').textContent='SD @'+pct+'%';
     document.getElementById('sb-sd').textContent='Stamp duty, '+pct+'% of final agreement value';
-    ['fav','sd','gst','reg','legal','total'].forEach(function(k){
+    ['fav','sd','gst','reg','total'].forEach(function(k){
       document.getElementById('o-'+k).value=fmt(n[k]);
     });
     document.getElementById('o-final').textContent='₹'+fmt(n.final);
